@@ -11,7 +11,7 @@ jobs:
       - id: inpxweb
         uses: pozetroninc/github-action-get-latest-release@v0.8.0
         with:
-          owner: bookpauk
+          owner: 00svd00
           repo: inpx-web
           excludes: prerelease,draft
 
@@ -31,4 +31,4 @@ jobs:
           platforms: linux/amd64
           push: true
           build-args: INPX_RELEASE=${{ steps.inpxweb.outputs.release }}
-          tags: ghcr.io/dekan/inpx-web:latest, ghcr.io/dekan/inpx-web:${{ steps.inpxweb.outputs.release }}
+          tags: ghcr.io/${{ github.repository_owner }}/inpx-web:latest, ghcr.io/${{ github.repository_owner }}/inpx-web:${{ steps.inpxweb.outputs.release }}
