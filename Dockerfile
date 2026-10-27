@@ -1,4 +1,4 @@
-FROM ghcr.io/linuxserver/baseimage-alpine:3.20
+FROM ghcr.io/linuxserver/baseimage-alpine:3.24
 
 ARG INPX_RELEASE
 
@@ -7,14 +7,14 @@ RUN \
   apk add --no-cache libgcc libstdc++ gcompat unzip && \
   echo "**** install inpx-web ****" && \
   if [ -z ${INPX_RELEASE+x} ]; then \
-    INPX_RELEASE=$(curl -sX GET https://api.github.com/repos/bookpauk/inpx-web/releases/latest \
+    INPX_RELEASE=$(curl -sX GET https://api.github.com/repos/00svd00/inpx-web/releases/latest \
       | awk '/tag_name/{print $4;exit}' FS='[""]'); \
   fi && \
   mkdir -p /app/ && \
   echo "**** Downloading version ${INPX_RELEASE} ****" && \
   curl -o \
     /tmp/inpx-web.zip -L \
-    "https://github.com/bookpauk/inpx-web/releases/download/${INPX_RELEASE}/inpx-web-${INPX_RELEASE}-linux.zip" && \
+    "https://github.com/00svd00/inpx-web/releases/download/${INPX_RELEASE}/inpx-web-${INPX_RELEASE}-linux.zip" && \
   unzip /tmp/inpx-web.zip -d /app && \
   echo "**** clean up ****" && \
   rm -rf \
