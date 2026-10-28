@@ -1,28 +1,24 @@
-FROM ghcr.io/linuxserver/baseimage-alpine:3.24
+FROM node:lts-alpine AS builder
 
 ARG INPX_RELEASE
 
-RUN \
-  echo "**** install runtime dependencies ****" && \
-  apk add --no-cache libgcc libstdc++ gcompat unzip && \
-  echo "**** install inpx-web ****" && \
-  if [ -z ${INPX_RELEASE+x} ]; then \
-    INPX_RELEASE=$(curl -sX GET https://api.github.com/repos/00svd00/inpx-web/releases/latest \
-      | awk '/tag_name/{print $4;exit}' FS='[""]'); \
-  fi && \
-  mkdir -p /app/ && \
-  echo "**** Downloading version ${INPX_RELEASE} ****" && \
-  curl -o \
-    /tmp/inpx-web.zip -L \
-    "https://github.com/00svd00/inpx-web/releases/download/${INPX_RELEASE}/inpx-web-${INPX_RELEASE}-linux.zip" && \
-  unzip /tmp/inpx-web.zip -d /app && \
-  echo "**** clean up ****" && \
-  rm -rf \
-    /config/* \
-    /tmp/*
+WORKDIR /build
+RUN apk add --no-cache git zip 
+RUN  git clone https://github.com/00svd00/inpx-web.git . && \
+    if [ -n "${INPX_RELEASE}" ]; then git checkout "${INPX_RELEASE}"; fi
+RUN npm ci 
+RUN  npm run build:client
+RUN  node build/prepkg.js linux 
+RUN  npm run build:bundle
+RUN  ./node_modules/.bin/pkg -t node24-alpine-x64 -C GZip --options max-old-space-size=4098,expose-gc -o dist/linux/inpx-web dist/bundle/index.js
 
+
+FROM node:lts-alpine
+RUN apk add --no-cache 7zip
 # add local files
-COPY /root /
+WORKDIR /app
+COPY --from=builder /build/dist/linux/inpx-web  /app/inpx-web
+RUN mkdir /library /data && touch /catalog.inpx && chmod +x /app/inpx-web
 
 # ports and volumes
 EXPOSE 12380
@@ -30,3 +26,5 @@ EXPOSE 12380
 VOLUME /library
 VOLUME /data
 VOLUME /catalog.inpx
+
+CMD ["/app/inpx-web", "--lib-dir=/library", "--data-dir=/data", "--inpx=/catalog.inpx",  "--host=0.0.0.0", "--port=12380" ]
